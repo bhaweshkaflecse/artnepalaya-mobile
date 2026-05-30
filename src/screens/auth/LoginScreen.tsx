@@ -1,13 +1,21 @@
 // src/screens/auth/LoginScreen.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ImageBackground,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useAppDispatch } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { setGuest } from '../../store/slices/authSlice';
 import { colors } from '../../theme/colors';
 
 export const LoginScreen = () => {
   const dispatch = useAppDispatch();
+  const { authBackgroundMedia } = useAppSelector((state) => state.app);
 
   const handleGoogleLogin = () => {
     // TODO: Implement Google OAuth flow
@@ -18,31 +26,58 @@ export const LoginScreen = () => {
     dispatch(setGuest());
   };
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoIcon}>
-            <Feather name="aperture" size={48} color={colors.accent} />
-          </View>
-          <Text style={styles.logoText}>ARTNEPALAYA</Text>
-          <Text style={styles.tagline}>Discover Nepali Art</Text>
-        </View>
+  const backgroundImage = authBackgroundMedia.find((item) => item.type === 'image');
 
-        {/* Login Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-            <Feather name="mail" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+  const content = (
+    <View style={styles.container}>
+      {/* Logo */}
+      <View style={styles.logoContainer}>
+        <View style={styles.logoIcon}>
+          <Feather name="aperture" size={48} color={backgroundImage ? '#FFFFFF' : colors.accent} />
         </View>
+        <Text style={[styles.logoText, backgroundImage && styles.logoTextLight]}>
+          ARTNEPALAYA
+        </Text>
+        <Text style={[styles.tagline, backgroundImage && styles.taglineLight]}>
+          Discover Nepali Art
+        </Text>
+      </View>
 
-        {/* Skip */}
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip for now</Text>
+      {/* Login Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+          <Feather name="mail" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+          <Text style={styles.googleButtonText}>Sign in with Google</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Skip */}
+      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+        <Text style={[styles.skipText, backgroundImage && styles.skipTextLight]}>
+          Skip for now
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (backgroundImage) {
+    return (
+      <ImageBackground
+        source={{ uri: backgroundImage.url }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeAreaTransparent}>
+          {content}
+        </SafeAreaView>
+      </ImageBackground>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {content}
     </SafeAreaView>
   );
 };
@@ -51,6 +86,16 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  safeAreaTransparent: {
+    flex: 1,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   container: {
     flex: 1,
@@ -71,10 +116,16 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     color: colors.textPrimary,
   },
+  logoTextLight: {
+    color: '#FFFFFF',
+  },
   tagline: {
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: 8,
+  },
+  taglineLight: {
+    color: 'rgba(255,255,255,0.8)',
   },
   buttonContainer: {
     width: '100%',
@@ -103,5 +154,8 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  skipTextLight: {
+    color: 'rgba(255,255,255,0.8)',
   },
 });
