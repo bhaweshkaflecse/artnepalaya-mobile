@@ -82,11 +82,16 @@ export const ExploreScreen = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
       const response = await postService.getFeed(null, 30);
       setPosts(response.data);
+      setCursor(response.meta.nextCursor);
+      setHasMore(response.meta.hasNextPage);
     } catch (_e) {
       // silently fail for MVP
     } finally {
@@ -95,12 +100,29 @@ export const ExploreScreen = () => {
     }
   }, []);
 
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoadingMore || !cursor) return;
+    setIsLoadingMore(true);
+    try {
+      const response = await postService.getFeed(cursor, 30);
+      setPosts((prev) => [...prev, ...response.data]);
+      setCursor(response.meta.nextCursor);
+      setHasMore(response.meta.hasNextPage);
+    } catch (_e) {
+      // silently fail for MVP
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [cursor, hasMore, isLoadingMore]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    setCursor(null);
+    setHasMore(true);
     fetchData();
   }, [fetchData]);
 
@@ -199,6 +221,8 @@ export const ExploreScreen = () => {
           columnWrapperStyle={styles.row}
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

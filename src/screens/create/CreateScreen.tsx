@@ -27,6 +27,7 @@ const ARTWORK_TYPES = [
 
 export const CreateScreen = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageFileSize, setImageFileSize] = useState<number | null>(null);
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [artworkType, setArtworkType] = useState<string>('');
@@ -42,7 +43,14 @@ export const CreateScreen = () => {
       });
 
       if (!result.canceled) {
-        setImageUri(result.assets[0].uri);
+        const asset = result.assets[0];
+        // Check file size if available (10MB limit)
+        if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
+          Alert.alert('File Too Large', 'Please select an image under 10MB.');
+          return;
+        }
+        setImageUri(asset.uri);
+        setImageFileSize(asset.fileSize || null);
       }
     } catch (_e) {
       // Image picker not available - this is expected if expo-image-picker
@@ -52,6 +60,7 @@ export const CreateScreen = () => {
 
   const resetForm = () => {
     setImageUri(null);
+    setImageFileSize(null);
     setDescription('');
     setTags('');
     setArtworkType('');
@@ -81,11 +90,22 @@ export const CreateScreen = () => {
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-      formData.append('media', {
+      // File size guard: the backend enforces body limits.
+      // The image picker uses quality: 0.8 to reduce size, but we add a client-side
+      // check for files that may still exceed the 10MB limit advertised in the UI.
+      if (imageFileSize && imageFileSize > 10 * 1024 * 1024) {
+        Alert.alert('File Too Large', 'Please select an image under 10MB.');
+        setIsPublishing(false);
+        return;
+      }
+
+      const imageAsset = {
         uri: imageUri,
         name: filename,
         type,
-      } as any);
+      };
+
+      formData.append('media', imageAsset as any);
 
       if (description) {
         formData.append('description', description);

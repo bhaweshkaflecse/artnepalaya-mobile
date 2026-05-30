@@ -4,7 +4,11 @@ import * as SecureStore from 'expo-secure-store';
 import { store } from '../store';
 import { setTokens, logout } from '../store/slices/authSlice';
 
-const BASE_URL = 'http://localhost:8080/api/v1';
+// Expo provides EXPO_PUBLIC_* env vars through the Metro bundler.
+// We declare the type inline to avoid requiring @types/node.
+declare const process: { env: { EXPO_PUBLIC_API_URL?: string } };
+
+const BASE_URL: string = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 export const api = axios.create({
   baseURL: BASE_URL,

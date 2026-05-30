@@ -60,7 +60,7 @@ export const ProfileScreen = () => {
     <View style={styles.emptyState}>
       <Feather name="bookmark" size={48} color={lightColors.textSecondary} />
       <Text style={styles.emptyText}>No saved posts yet</Text>
-      <Text style={styles.emptySubtext}>Posts you save will appear here</Text>
+      <Text style={styles.emptySubtext}>Your saved artworks will appear here</Text>
     </View>
   );
 

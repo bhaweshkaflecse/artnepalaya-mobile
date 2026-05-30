@@ -30,10 +30,14 @@ export const authService = {
   },
 
   sendOtp: async (phoneNumber: string, token: string): Promise<OtpResponse> => {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await api.post(
       '/auth/otp/send',
       { phoneNumber },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers }
     );
     return response.data;
   },
@@ -44,10 +48,14 @@ export const authService = {
     deviceId: string,
     token: string
   ): Promise<AuthResponse> => {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await api.post(
       '/auth/otp/verify',
       { phoneNumber, otp, deviceId },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers }
     );
     return response.data;
   },

@@ -14,12 +14,14 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { authService } from '../../services/auth.service';
+import { useAppSelector } from '../../store';
 
 export const OtpScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
 
   const otpRefs = useRef<Array<any>>([]);
 
@@ -30,7 +32,7 @@ export const OtpScreen = () => {
     }
     setLoading(true);
     try {
-      await authService.sendOtp(`+977${phoneNumber}`, '');
+      await authService.sendOtp(`+977${phoneNumber}`, accessToken || '');
       setOtpSent(true);
     } catch (error) {
       Alert.alert('Error', 'Failed to send OTP. Please try again.');
@@ -64,7 +66,7 @@ export const OtpScreen = () => {
     }
     setLoading(true);
     try {
-      await authService.verifyOtp(`+977${phoneNumber}`, otpString, 'device-id', '');
+      await authService.verifyOtp(`+977${phoneNumber}`, otpString, 'device-id', accessToken || '');
       // Navigation will happen automatically via auth state change
     } catch (error) {
       Alert.alert('Error', 'Invalid OTP. Please try again.');

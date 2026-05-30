@@ -7,7 +7,7 @@ declare module 'expo-image-picker' {
 
   export interface ImagePickerResult {
     canceled: boolean;
-    assets: Array<{ uri: string; width: number; height: number }>;
+    assets: Array<{ uri: string; width: number; height: number; fileSize?: number }>;
   }
 
   export function launchImageLibraryAsync(options?: {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,8 @@ export const HomeScreen = () => {
   const { isGuest, guestPostsViewed } = useAppSelector((state) => state.auth);
 
   const viewedPostIds = useRef<Set<string>>(new Set()).current;
-  const showGuestModal = isGuest && guestPostsViewed >= 15;
+  const [modalDismissed, setModalDismissed] = useState(false);
+  const showGuestModal = isGuest && guestPostsViewed >= 15 && !modalDismissed;
 
   useEffect(() => {
     dispatch(fetchFeed());
@@ -140,7 +141,7 @@ export const HomeScreen = () => {
       />
       <GuestLimitModal
         visible={showGuestModal}
-        onDismiss={() => {}}
+        onDismiss={() => setModalDismissed(true)}
         onSignIn={() => {
           (navigation as any).navigate('Login');
         }}
