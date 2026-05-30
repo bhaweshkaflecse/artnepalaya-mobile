@@ -11,6 +11,8 @@ declare module 'react' {
   export function useState<S>(initialState: S | (() => S)): [S, Dispatch<SetStateAction<S>>];
   export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
   export function useRef<T>(initialValue: T): MutableRefObject<T>;
+  export function useCallback<T extends (...args: any[]) => any>(callback: T, deps: any[]): T;
+  export function useMemo<T>(factory: () => T, deps: any[]): T;
 
   namespace JSX {
     interface Element extends ReactElement {}

@@ -2,10 +2,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import authReducer from './slices/authSlice';
+import feedReducer from './slices/feedSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    feed: feedReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

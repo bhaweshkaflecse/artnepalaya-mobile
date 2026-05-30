@@ -40,4 +40,14 @@ declare module '@reduxjs/toolkit' {
     dispatch: (action: any) => any;
     subscribe: (listener: () => void) => () => void;
   };
+
+  export function createAsyncThunk<Returned = any, ThunkArg = void>(
+    typePrefix: string,
+    payloadCreator: (arg: ThunkArg, thunkAPI: any) => Promise<Returned> | Returned
+  ): {
+    (arg: ThunkArg): any;
+    pending: { type: string };
+    fulfilled: { type: string };
+    rejected: { type: string };
+  };
 }
