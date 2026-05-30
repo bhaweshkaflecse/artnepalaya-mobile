@@ -14,30 +14,59 @@ export interface Post {
   description?: string;
   tags: { _id: string; name: string }[];
   stats: { saves: number; likes: number };
-  isLikedByMe?: boolean; // Hydrated by backend
-  isSavedByMe?: boolean; // Hydrated by backend
+  isLikedByMe?: boolean;
+  isSavedByMe?: boolean;
   createdAt: string;
+}
+
+export interface FeedResponse {
+  data: Post[];
+  meta: { nextCursor: string | null; hasNextPage: boolean };
 }
 
 export const postService = {
   getFeatured: async (): Promise<Post[]> => {
-    const response = await api.get('/posts/featured');
-    return response.data.data;
-  },
-  
-  // Hardcoded to page 1, limit 20 to strictly enforce MVP constraint
-  getFeed: async (): Promise<Post[]> => {
-    const response = await api.get('/posts/feed?page=1&limit=20');
+    const response = await api.get('/admin/featured');
     return response.data.data;
   },
 
-  toggleSave: async (postId: string) => {
-    const response = await api.post(`/interactions/posts/${postId}/save`);
-    return response.data;
+  getFeed: async (cursor?: string | null, limit: number = 15): Promise<FeedResponse> => {
+    const params: any = { limit };
+    if (cursor) {
+      params.cursor = cursor;
+    }
+    const response = await api.get('/posts/feed', { params });
+    return {
+      data: response.data.data,
+      meta: response.data.meta || { nextCursor: null, hasNextPage: false },
+    };
   },
 
-  toggleLike: async (postId: string) => {
-    const response = await api.post(`/interactions/posts/${postId}/like`);
-    return response.data;
-  }
+  getGuestFeed: async (cursor?: string | null, limit: number = 15): Promise<FeedResponse> => {
+    const params: any = { limit };
+    if (cursor) {
+      params.cursor = cursor;
+    }
+    const response = await api.get('/posts/feed', { params });
+    return {
+      data: response.data.data,
+      meta: response.data.meta || { nextCursor: null, hasNextPage: false },
+    };
+  },
+
+  likePost: async (postId: string): Promise<void> => {
+    await api.post(`/posts/${postId}/likes`);
+  },
+
+  unlikePost: async (postId: string): Promise<void> => {
+    await api.delete(`/posts/${postId}/likes`);
+  },
+
+  savePost: async (postId: string): Promise<void> => {
+    await api.post(`/posts/${postId}/saves`);
+  },
+
+  unsavePost: async (postId: string): Promise<void> => {
+    await api.delete(`/posts/${postId}/saves`);
+  },
 };

@@ -1,109 +1,202 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  SafeAreaView,
+  RefreshControl,
+  StatusBar,
+  ViewToken,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors } from '../../theme/colors';
+import { useNavigation } from '@react-navigation/native';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { incrementGuestViews } from '../../store/slices/authSlice';
+import { fetchFeed, fetchMoreFeed, fetchFeatured } from '../../store/slices/feedSlice';
 import { PostCard } from '../../components/home/PostCard';
 import { FeaturedSection } from '../../components/home/FeaturedSection';
-import { Post, postService } from '../../services/post.service';
+import { PostCardSkeleton } from '../../components/common/SkeletonLoader';
+import { GuestLimitModal } from '../../components/common/GuestLimitModal';
+import { Post } from '../../services/post.service';
 
 export const HomeScreen = () => {
-  const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
-  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation();
 
-  const fetchHomeData = async () => {
-    try {
-      const [featuredRes, feedRes] = await Promise.all([
-        postService.getFeatured(),
-        postService.getFeed() // Hard limited to 20 by the service
-      ]);
-      setFeaturedPosts(featuredRes);
-      setFeedPosts(feedRes);
-    } catch (error) {
-      console.error('Failed to fetch home data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  const { feedPosts, featuredPosts, isLoadingFeed, isLoadingFeatured, isLoadingMore, hasNextPage } =
+    useAppSelector((state) => state.feed);
+  const { isGuest, guestPostsViewed } = useAppSelector((state) => state.auth);
+
+  const viewedPostIds = useRef<Set<string>>(new Set()).current;
+  const [modalDismissed, setModalDismissed] = useState(false);
+  const showGuestModal = isGuest && guestPostsViewed >= 15 && !modalDismissed;
+
+  useEffect(() => {
+    dispatch(fetchFeed());
+    dispatch(fetchFeatured());
+  }, [dispatch]);
+
+  const handleRefresh = () => {
+    dispatch(fetchFeed());
+    dispatch(fetchFeatured());
+  };
+
+  const handleEndReached = () => {
+    if (hasNextPage && !isLoadingMore && !isLoadingFeed) {
+      dispatch(fetchMoreFeed());
     }
   };
 
-  useEffect(() => {
-    fetchHomeData();
-  }, []);
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (!isGuest) return;
+      viewableItems.forEach((viewable) => {
+        const postId = viewable.item?._id;
+        if (postId && !viewedPostIds.has(postId)) {
+          viewedPostIds.add(postId);
+          dispatch(incrementGuestViews());
+        }
+      });
+    },
+    [isGuest, dispatch, viewedPostIds]
+  );
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchHomeData();
-  };
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
 
   const renderHeader = () => (
     <>
       <View style={styles.topBar}>
         <Text style={styles.logo}>ARTNEPALAYA</Text>
-        <View style={styles.topBarIcons}>
-          <Feather name="search" size={24} color={colors.textPrimary} style={{ marginRight: 16 }} />
-          <Feather name="bell" size={24} color={colors.textPrimary} />
-        </View>
+        <Feather name="bell" size={24} color="#FFFFFF" />
       </View>
-      <FeaturedSection posts={featuredPosts} />
+      <FeaturedSection posts={featuredPosts} loading={isLoadingFeatured} />
     </>
   );
 
-  const renderFooter = () => (
-    <View style={styles.caughtUpContainer}>
-      <Feather name="check-circle" size={32} color={colors.textSecondary} />
-      <Text style={styles.caughtUpText}>You are all caught up!</Text>
-      <Text style={styles.caughtUpSubtext}>Check back later for more artworks.</Text>
-    </View>
-  );
+  const renderFooter = () => {
+    if (isLoadingMore) {
+      return (
+        <View style={styles.footerLoader}>
+          <PostCardSkeleton />
+        </View>
+      );
+    }
+    if (!hasNextPage && feedPosts.length > 0) {
+      return (
+        <View style={styles.caughtUpContainer}>
+          <Feather name="check-circle" size={32} color="#A0A0A0" />
+          <Text style={styles.caughtUpText}>You're all caught up</Text>
+          <Text style={styles.caughtUpSubtext}>Check back later for more artworks</Text>
+        </View>
+      );
+    }
+    return null;
+  };
 
-  if (loading) {
+  const renderItem = ({ item }: { item: Post }) => <PostCard post={item} />;
+
+  if (isLoadingFeed && feedPosts.length === 0) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.topBar}>
+          <Text style={styles.logo}>ARTNEPALAYA</Text>
+          <Feather name="bell" size={24} color="#FFFFFF" />
+        </View>
+        <View style={styles.skeletonList}>
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" />
       <FlatList
         data={feedPosts}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <PostCard post={item} />}
+        renderItem={renderItem}
         ListHeaderComponent={renderHeader}
-        ListFooterComponent={feedPosts.length > 0 ? renderFooter : null}
+        ListFooterComponent={renderFooter}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+          <RefreshControl
+            refreshing={isLoadingFeed && feedPosts.length > 0}
+            onRefresh={handleRefresh}
+            tintColor="#FFFFFF"
+          />
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={styles.listContent}
+        style={styles.flatList}
+      />
+      <GuestLimitModal
+        visible={showGuestModal}
+        onDismiss={() => setModalDismissed(true)}
+        onSignIn={() => {
+          (navigation as any).navigate('Login');
+        }}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.backgroundPrimary },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundPrimary },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  flatList: {
+    backgroundColor: '#000000',
+  },
+  listContent: {
+    paddingBottom: 40,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    backgroundColor: colors.backgroundPrimary,
+    backgroundColor: '#000000',
   },
-  logo: { fontSize: 18, fontWeight: '700', letterSpacing: 2, color: colors.textPrimary },
-  topBarIcons: { flexDirection: 'row' },
+  logo: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: '#FFFFFF',
+  },
+  skeletonList: {
+    flex: 1,
+    backgroundColor: '#000000',
+    paddingTop: 12,
+  },
+  footerLoader: {
+    paddingVertical: 16,
+  },
   caughtUpContainer: {
     paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  caughtUpText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginTop: 12 },
-  caughtUpSubtext: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  caughtUpText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginTop: 12,
+  },
+  caughtUpSubtext: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    marginTop: 4,
+  },
 });

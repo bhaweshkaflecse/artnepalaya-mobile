@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Share } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Share,
+  Animated,
+} from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme/colors';
+import { darkColors } from '../../theme/colors';
 import { Post, postService } from '../../services/post.service';
 
 interface PostCardProps {
@@ -9,25 +18,78 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
-  // Optimistic UI state
   const [isLiked, setIsLiked] = useState(post.isLikedByMe || false);
   const [isSaved, setIsSaved] = useState(post.isSavedByMe || false);
 
+  // Double-tap detection
+  const lastTap = useRef<number>(0);
+
+  // Heart animation values
+  const heartScale = useRef(new Animated.Value(0)).current;
+  const heartOpacity = useRef(new Animated.Value(0)).current;
+
+  const triggerHeartAnimation = () => {
+    heartScale.setValue(0);
+    heartOpacity.setValue(1);
+
+    Animated.sequence([
+      Animated.spring(heartScale, {
+        toValue: 1.2,
+        useNativeAnimation: true,
+      }),
+      Animated.spring(heartScale, {
+        toValue: 1,
+        useNativeAnimation: true,
+      }),
+      Animated.delay(400),
+      Animated.timing(heartOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeAnimation: true,
+      }),
+    ]).start();
+  };
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const delta = now - lastTap.current;
+    lastTap.current = now;
+
+    if (delta < 300) {
+      // Double-tap detected
+      if (!isLiked) {
+        setIsLiked(true);
+        postService.likePost(post._id).catch(() => setIsLiked(false));
+      }
+      triggerHeartAnimation();
+    }
+  };
+
   const handleLike = async () => {
-    setIsLiked(!isLiked); // Optimistic update
+    const newValue = !isLiked;
+    setIsLiked(newValue);
     try {
-      await postService.toggleLike(post._id);
-    } catch (error) {
-      setIsLiked(isLiked); // Revert on failure
+      if (newValue) {
+        await postService.likePost(post._id);
+      } else {
+        await postService.unlikePost(post._id);
+      }
+    } catch {
+      setIsLiked(!newValue);
     }
   };
 
   const handleSave = async () => {
-    setIsSaved(!isSaved); // Optimistic update
+    const newValue = !isSaved;
+    setIsSaved(newValue);
     try {
-      await postService.toggleSave(post._id);
-    } catch (error) {
-      setIsSaved(isSaved); // Revert on failure
+      if (newValue) {
+        await postService.savePost(post._id);
+      } else {
+        await postService.unsavePost(post._id);
+      }
+    } catch {
+      setIsSaved(!newValue);
     }
   };
 
@@ -35,10 +97,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     try {
       await Share.share({
         message: `Check out this artwork by ${post.authorId.username} on Artnepalaya!`,
-        // URL could be added here if deep linking is configured
       });
     } catch (error) {
-      console.error(error);
+      // Silently handle share cancellation
     }
   };
 
@@ -46,51 +107,69 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.avatarPlaceholder}>
+        <View style={styles.avatarContainer}>
           {post.authorId.avatarUrl ? (
             <Image source={{ uri: post.authorId.avatarUrl }} style={styles.avatar} />
           ) : (
-            <Feather name="user" size={16} color={colors.textSecondary} />
+            <Feather name="user" size={16} color={darkColors.textSecondary} />
           )}
         </View>
         <View>
           <Text style={styles.username}>{post.authorId.username}</Text>
-          <Text style={styles.timestamp}>{new Date(post.createdAt).toLocaleDateString()}</Text>
+          <Text style={styles.timestamp}>
+            {new Date(post.createdAt).toLocaleDateString()}
+          </Text>
         </View>
       </View>
 
-      {/* Media (MVP: Displaying first media item) */}
-      {post.media[0] && (
-        <Image 
-          source={{ uri: post.media[0].url }} 
-          style={styles.image} 
-          resizeMode="cover"
-        />
-      )}
+      {/* Image with double-tap */}
+      <TouchableWithoutFeedback onPress={handleDoubleTap}>
+        <View style={styles.imageWrapper}>
+          {post.media[0] && (
+            <Image
+              source={{ uri: post.media[0].url }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          )}
+          {/* Heart animation overlay */}
+          <Animated.View
+            style={[
+              styles.heartOverlay,
+              {
+                transform: [{ scale: heartScale }],
+                opacity: heartOpacity,
+              },
+            ]}
+          >
+            <Ionicons name="heart" size={80} color="#FFFFFF" />
+          </Animated.View>
+        </View>
+      </TouchableWithoutFeedback>
 
-      {/* Actions (Strictly NO Comments) */}
+      {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity onPress={handleLike} style={styles.actionBtn}>
-          <Ionicons 
-            name={isLiked ? "heart" : "heart-outline"} 
-            size={24} 
-            color={isLiked ? colors.accent : colors.textPrimary} 
+          <Ionicons
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={24}
+            color={isLiked ? '#FF3B30' : '#FFFFFF'}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleShare} style={styles.actionBtn}>
-          <Feather name="send" size={24} color={colors.textPrimary} />
+          <Feather name="send" size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <TouchableOpacity onPress={handleSave} style={styles.actionBtn}>
-          <Ionicons 
-            name={isSaved ? "bookmark" : "bookmark-outline"} 
-            size={24} 
-            color={isSaved ? colors.accent : colors.textPrimary} 
+          <Ionicons
+            name={isSaved ? 'bookmark' : 'bookmark-outline'}
+            size={24}
+            color={isSaved ? '#FFFFFF' : '#FFFFFF'}
           />
         </TouchableOpacity>
       </View>
 
-      {/* Description & Tags */}
+      {/* Description and Tags */}
       <View style={styles.content}>
         {post.description && (
           <Text style={styles.description}>
@@ -98,11 +177,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {post.description}
           </Text>
         )}
-        <View style={styles.tagContainer}>
-          {post.tags.map(tag => (
-            <Text key={tag._id} style={styles.tag}>#{tag.name}</Text>
-          ))}
-        </View>
+        {post.tags.length > 0 && (
+          <View style={styles.tagContainer}>
+            {post.tags.map((tag) => (
+              <Text key={tag._id} style={styles.tag}>
+                #{tag.name}
+              </Text>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -110,35 +193,89 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surfacePrimary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    backgroundColor: '#000000',
     paddingBottom: 16,
-    marginBottom: 8,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1A1A',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
   },
-  avatarPlaceholder: {
+  avatarContainer: {
     width: 32,
     height: 32,
-    borderRadius: 4,
-    backgroundColor: colors.surfaceSecondary,
+    borderRadius: 6,
+    backgroundColor: darkColors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
   },
-  avatar: { width: 32, height: 32, borderRadius: 4 },
-  username: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  timestamp: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  image: { width: '100%', aspectRatio: 4 / 5, backgroundColor: colors.surfaceSecondary },
-  actions: { flexDirection: 'row', padding: 12, alignItems: 'center' },
-  actionBtn: { marginRight: 16 },
-  content: { paddingHorizontal: 12 },
-  boldUsername: { fontWeight: '600', color: colors.textPrimary },
-  description: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
-  tagContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
-  tag: { fontSize: 12, color: colors.textSecondary, marginRight: 8 },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+  },
+  username: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  timestamp: {
+    fontSize: 12,
+    color: darkColors.textSecondary,
+    marginTop: 2,
+  },
+  imageWrapper: {
+    width: '100%',
+    aspectRatio: 4 / 5,
+    backgroundColor: darkColors.surface,
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  heartOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actions: {
+    flexDirection: 'row',
+    padding: 12,
+    alignItems: 'center',
+  },
+  actionBtn: {
+    marginRight: 16,
+  },
+  content: {
+    paddingHorizontal: 12,
+  },
+  boldUsername: {
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  description: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  tag: {
+    fontSize: 12,
+    color: darkColors.textSecondary,
+    marginRight: 8,
+  },
 });
