@@ -1,7 +1,6 @@
 // src/services/api.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { store } from '../store';
 import { setTokens, logout } from '../store/slices/authSlice';
 
 // Expo provides EXPO_PUBLIC_* env vars through the Metro bundler.
@@ -9,6 +8,14 @@ import { setTokens, logout } from '../store/slices/authSlice';
 declare const process: { env: { EXPO_PUBLIC_API_URL?: string } };
 
 const BASE_URL: string = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+
+// Runtime store injection to avoid circular dependency:
+// store/index.ts -> feedSlice.ts -> post.service.ts -> api.ts -> store/index.ts
+let _store: any = null;
+
+export const injectStore = (s: any) => {
+  _store = s;
+};
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -18,11 +25,13 @@ export const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach JWT from Redux store
+// Request Interceptor: Attach JWT from SecureStore or injected store
 api.interceptors.request.use(
-  (config) => {
-    const state = store.getState();
-    const token = state.auth.accessToken;
+  async (config) => {
+    let token = await SecureStore.getItemAsync('accessToken');
+    if (!token && _store) {
+      token = _store.getState()?.auth?.accessToken;
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -66,11 +75,13 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const state = store.getState();
-      const refreshTokenValue = state.auth.refreshToken;
+      let refreshTokenValue = await SecureStore.getItemAsync('refreshToken');
+      if (!refreshTokenValue && _store) {
+        refreshTokenValue = _store.getState()?.auth?.refreshToken;
+      }
 
       if (!refreshTokenValue) {
-        store.dispatch(logout());
+        _store?.dispatch(logout());
         isRefreshing = false;
         return Promise.reject(error);
       }
@@ -82,7 +93,7 @@ api.interceptors.response.use(
 
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
-        store.dispatch(setTokens({ accessToken, refreshToken: newRefreshToken }));
+        _store?.dispatch(setTokens({ accessToken, refreshToken: newRefreshToken }));
 
         await SecureStore.setItemAsync('accessToken', accessToken);
         await SecureStore.setItemAsync('refreshToken', newRefreshToken);
@@ -93,7 +104,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError as AxiosError, null);
-        store.dispatch(logout());
+        _store?.dispatch(logout());
         await SecureStore.deleteItemAsync('accessToken');
         await SecureStore.deleteItemAsync('refreshToken');
         return Promise.reject(refreshError);
