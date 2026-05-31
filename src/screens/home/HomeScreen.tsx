@@ -8,9 +8,12 @@ import {
   RefreshControl,
   StatusBar,
   ViewToken,
+  TouchableOpacity,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../../navigation/AppStack';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { incrementGuestViews, logout } from '../../store/slices/authSlice';
 import { fetchFeed, fetchMoreFeed, fetchFeatured } from '../../store/slices/feedSlice';
@@ -22,7 +25,7 @@ import { Post } from '../../services/post.service';
 
 export const HomeScreen = () => {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
   const { feedPosts, featuredPosts, isLoadingFeed, isLoadingFeatured, isLoadingMore, hasNextPage } =
     useAppSelector((state) => state.feed);
@@ -70,7 +73,9 @@ export const HomeScreen = () => {
     <>
       <View style={styles.topBar}>
         <Text style={styles.logo}>ARTNEPALAYA</Text>
-        <Feather name="bell" size={24} color="#FFFFFF" />
+        <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
+          <Feather name="bell" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
       <FeaturedSection posts={featuredPosts} loading={isLoadingFeatured} />
     </>

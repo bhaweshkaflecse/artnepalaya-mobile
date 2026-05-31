@@ -8,10 +8,20 @@ import {
   TouchableWithoutFeedback,
   Share,
   Animated,
+  Modal,
+  Alert,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { darkColors } from '../../theme/colors';
 import { Post, postService } from '../../services/post.service';
+
+const REPORT_REASONS = [
+  'Nudity',
+  'Fake/Misleading',
+  'Unmarked AI Content',
+  'Illegal Items',
+  'Spam',
+];
 
 interface PostCardProps {
   post: Post;
@@ -20,6 +30,7 @@ interface PostCardProps {
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [isLiked, setIsLiked] = useState(post.isLikedByMe || false);
   const [isSaved, setIsSaved] = useState(post.isSavedByMe || false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // Double-tap detection
   const lastTap = useRef<number>(0);
@@ -103,6 +114,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     }
   };
 
+  const handleReport = async (reason: string) => {
+    setShowReportModal(false);
+    try {
+      await postService.reportPost(post._id, reason);
+      Alert.alert('Report Submitted', 'Thank you for helping keep the community safe.');
+    } catch (_e) {
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
+    }
+  };
+
   return (
     <View style={styles.card}>
       {/* Header */}
@@ -114,12 +135,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <Feather name="user" size={16} color={darkColors.textSecondary} />
           )}
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.username}>{post.authorId.username}</Text>
           <Text style={styles.timestamp}>
             {new Date(post.createdAt).toLocaleDateString()}
           </Text>
         </View>
+        <TouchableOpacity onPress={() => setShowReportModal(true)} style={styles.moreBtn}>
+          <Feather name="more-horizontal" size={20} color={darkColors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {/* Image with double-tap */}
@@ -187,6 +211,41 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </View>
         )}
       </View>
+
+      {/* Report Modal */}
+      <Modal
+        visible={showReportModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowReportModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Report Post</Text>
+            <Text style={styles.modalSubtitle}>Why are you reporting this?</Text>
+            {REPORT_REASONS.map((reason) => (
+              <TouchableOpacity
+                key={reason}
+                style={styles.reportOption}
+                onPress={() => handleReport(reason)}
+              >
+                <Text style={styles.reportOptionText}>{reason}</Text>
+                <Feather name="chevron-right" size={18} color={darkColors.textSecondary} />
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => setShowReportModal(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -277,5 +336,53 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: darkColors.textSecondary,
     marginRight: 8,
+  },
+  moreBtn: {
+    padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: darkColors.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: darkColors.textSecondary,
+    marginBottom: 16,
+  },
+  reportOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: darkColors.border,
+  },
+  reportOptionText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  cancelBtn: {
+    marginTop: 16,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: darkColors.accent,
   },
 });
