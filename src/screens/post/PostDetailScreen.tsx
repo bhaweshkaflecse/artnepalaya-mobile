@@ -10,23 +10,14 @@ import {
   ActivityIndicator,
   Share,
   Alert,
-  Modal,
-  FlatList,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { darkColors } from '../../theme/colors';
 import { postService, Post } from '../../services/post.service';
+import { ReportModal } from '../../components/common/ReportModal';
 
 type PostDetailRouteProp = RouteProp<{ PostDetail: { postId: string } }, 'PostDetail'>;
-
-const REPORT_REASONS = [
-  'Nudity',
-  'Fake/Misleading',
-  'Unmarked AI Content',
-  'Illegal Items',
-  'Spam',
-];
 
 export const PostDetailScreen = () => {
   const route = useRoute<PostDetailRouteProp>();
@@ -93,17 +84,6 @@ export const PostDetailScreen = () => {
       });
     } catch (_e) {
       // Share cancelled
-    }
-  };
-
-  const handleReport = async (reason: string) => {
-    if (!post) return;
-    setShowReportModal(false);
-    try {
-      await postService.reportPost(post._id, reason);
-      Alert.alert('Report Submitted', 'Thank you for helping keep the community safe.');
-    } catch (_e) {
-      Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };
 
@@ -215,39 +195,11 @@ export const PostDetailScreen = () => {
       </ScrollView>
 
       {/* Report Modal */}
-      <Modal
+      <ReportModal
         visible={showReportModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowReportModal(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowReportModal(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Report Post</Text>
-            <Text style={styles.modalSubtitle}>Why are you reporting this?</Text>
-            {REPORT_REASONS.map((reason) => (
-              <TouchableOpacity
-                key={reason}
-                style={styles.reportOption}
-                onPress={() => handleReport(reason)}
-              >
-                <Text style={styles.reportOptionText}>{reason}</Text>
-                <Feather name="chevron-right" size={18} color={darkColors.textSecondary} />
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => setShowReportModal(false)}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setShowReportModal(false)}
+        postId={post._id}
+      />
     </SafeAreaView>
   );
 };
@@ -356,50 +308,5 @@ const styles = StyleSheet.create({
     color: darkColors.textSecondary,
     marginRight: 8,
     marginBottom: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: darkColors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: darkColors.textSecondary,
-    marginBottom: 16,
-  },
-  reportOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: darkColors.border,
-  },
-  reportOptionText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
-  cancelBtn: {
-    marginTop: 16,
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: darkColors.accent,
   },
 });

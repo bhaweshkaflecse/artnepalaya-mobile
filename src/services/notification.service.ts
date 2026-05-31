@@ -43,7 +43,7 @@ export const notificationService = {
   },
 
   markAllAsRead: async (): Promise<void> => {
-    await api.put('/notifications/read-all');
+    await api.put('/notifications/read');
   },
 
   registerPushToken: async (token: string): Promise<void> => {

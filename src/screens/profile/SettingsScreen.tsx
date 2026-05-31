@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { lightColors } from '../../theme/colors';
 import { userService } from '../../services/user.service';
+import { useAppSelector } from '../../store';
 
 type SettingsNavProp = NativeStackNavigationProp<{
   CmsPage: { slug: string; title: string };
@@ -28,7 +29,10 @@ const CMS_PAGES = [
 
 export const SettingsScreen = () => {
   const navigation = useNavigation<SettingsNavProp>();
-  const [nsfwBlurEnabled, setNsfwBlurEnabled] = useState(true);
+  const profile = useAppSelector((state) => state.user.profile);
+  const [nsfwBlurEnabled, setNsfwBlurEnabled] = useState(
+    (profile as any)?.nsfwBlurEnabled ?? true
+  );
 
   const handleNsfwToggle = async (value: boolean) => {
     const previousValue = nsfwBlurEnabled;
