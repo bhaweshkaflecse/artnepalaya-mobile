@@ -1,4 +1,4 @@
-// src/screens/auth/LoginScreen.tsx
+// src/screens/auth/SignUpScreen.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -16,7 +16,7 @@ import { setGuest } from '../../store/slices/authSlice';
 
 const { width, height } = Dimensions.get('window');
 
-export const LoginScreen = () => {
+export const SignUpScreen = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const { authBackgroundMedia } = useAppSelector((state) => state.app);
@@ -37,7 +37,6 @@ export const LoginScreen = () => {
       setCurrentIndex(nextIndex);
 
       if (showFirst) {
-        // Fade out first, fade in second
         Animated.parallel([
           Animated.timing(fadeAnim1, {
             toValue: 0,
@@ -51,7 +50,6 @@ export const LoginScreen = () => {
           }),
         ]).start();
       } else {
-        // Fade out second, fade in first
         Animated.parallel([
           Animated.timing(fadeAnim2, {
             toValue: 0,
@@ -76,16 +74,16 @@ export const LoginScreen = () => {
     };
   }, [currentIndex, showFirst, imageItems.length]);
 
-  const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth flow
+  const handleGoogleSignUp = () => {
+    // TODO: Implement Google OAuth sign-up flow
   };
 
   const handleSkip = () => {
     dispatch(setGuest());
   };
 
-  const handleSignUp = () => {
-    navigation.navigate('SignUp');
+  const handleSignIn = () => {
+    navigation.navigate('Login');
   };
 
   const getImageUri = (index: number) => {
@@ -129,22 +127,24 @@ export const LoginScreen = () => {
               <Feather name="aperture" size={48} color="#FFFFFF" />
             </View>
             <Text style={styles.logoText}>ARTNEPALAYA</Text>
-            <Text style={styles.tagline}>Discover Nepali Art</Text>
           </View>
 
-          {/* Login Buttons */}
+          {/* Heading */}
+          <Text style={styles.heading}>Create Account</Text>
+
+          {/* Sign Up Button */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignUp}>
               <Feather name="mail" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-              <Text style={styles.googleButtonText}>Sign in with Google</Text>
+              <Text style={styles.googleButtonText}>Sign up with Google</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Sign Up Link */}
-          <TouchableOpacity style={styles.signUpLink} onPress={handleSignUp}>
-            <Text style={styles.signUpText}>
-              Don't have an account?{' '}
-              <Text style={styles.signUpHighlight}>Sign Up</Text>
+          {/* Sign In Link */}
+          <TouchableOpacity style={styles.signInLink} onPress={handleSignIn}>
+            <Text style={styles.signInText}>
+              Already have an account?{' '}
+              <Text style={styles.signInHighlight}>Sign In</Text>
             </Text>
           </TouchableOpacity>
 
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 64,
+    marginBottom: 32,
   },
   logoIcon: {
     marginBottom: 16,
@@ -198,10 +198,11 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     color: '#FFFFFF',
   },
-  tagline: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 8,
+  heading: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 32,
   },
   buttonContainer: {
     width: '100%',
@@ -224,14 +225,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  signUpLink: {
+  signInLink: {
     paddingVertical: 12,
   },
-  signUpText: {
+  signInText: {
     fontSize: 14,
     color: 'rgba(255,255,255,0.8)',
   },
-  signUpHighlight: {
+  signInHighlight: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
