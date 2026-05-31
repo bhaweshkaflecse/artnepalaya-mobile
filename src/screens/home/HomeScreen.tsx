@@ -12,7 +12,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { incrementGuestViews } from '../../store/slices/authSlice';
+import { incrementGuestViews, logout } from '../../store/slices/authSlice';
 import { fetchFeed, fetchMoreFeed, fetchFeatured } from '../../store/slices/feedSlice';
 import { PostCard } from '../../components/home/PostCard';
 import { FeaturedSection } from '../../components/home/FeaturedSection';
@@ -143,7 +143,7 @@ export const HomeScreen = () => {
         visible={showGuestModal}
         onDismiss={() => setModalDismissed(true)}
         onSignIn={() => {
-          (navigation as any).navigate('Login');
+          dispatch(logout());
         }}
       />
     </SafeAreaView>

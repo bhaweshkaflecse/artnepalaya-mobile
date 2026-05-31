@@ -179,9 +179,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         )}
         {post.tags.length > 0 && (
           <View style={styles.tagContainer}>
-            {post.tags.map((tag) => (
-              <Text key={tag._id} style={styles.tag}>
-                #{tag.name}
+            {post.tags.map((tag: any, index: number) => (
+              <Text key={typeof tag === 'string' ? tag : (tag._id || index.toString())} style={styles.tag}>
+                #{typeof tag === 'string' ? tag : tag.name}
               </Text>
             ))}
           </View>
