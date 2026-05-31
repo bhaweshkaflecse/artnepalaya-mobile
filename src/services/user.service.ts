@@ -12,11 +12,13 @@ export interface User {
   username: string;
   fullName: string;
   avatarUrl?: string;
+  bio?: string;
   role: string;
   subRoles?: string[];
   phoneNumber?: string;
   stats: UserStats;
   isAdult?: boolean;
+  nsfwBlurEnabled?: boolean;
   status?: string;
 }
 
