@@ -1,80 +1,21 @@
 // src/screens/auth/LoginScreen.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Animated,
-  Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useAppDispatch, useAppSelector } from '../../store';
+import { useAppDispatch } from '../../store';
 import { setGuest } from '../../store/slices/authSlice';
-
-const { width, height } = Dimensions.get('window');
+import { AnimatedBackground } from '../../components/common/AnimatedBackground';
 
 export const LoginScreen = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { authBackgroundMedia } = useAppSelector((state) => state.app);
-
-  const imageItems = authBackgroundMedia.filter((item) => item.type === 'image');
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const fadeAnim1 = useRef(new Animated.Value(1)).current;
-  const fadeAnim2 = useRef(new Animated.Value(0)).current;
-  const [showFirst, setShowFirst] = useState(true);
-  const intervalRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (imageItems.length <= 1) return;
-
-    intervalRef.current = setInterval(() => {
-      const nextIndex = (currentIndex + 1) % imageItems.length;
-      setCurrentIndex(nextIndex);
-
-      if (showFirst) {
-        // Fade out first, fade in second
-        Animated.parallel([
-          Animated.timing(fadeAnim1, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim2, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      } else {
-        // Fade out second, fade in first
-        Animated.parallel([
-          Animated.timing(fadeAnim2, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim1, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      }
-
-      setShowFirst(!showFirst);
-    }, 4000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [currentIndex, showFirst, imageItems.length]);
 
   const handleGoogleLogin = () => {
     // TODO: Implement Google OAuth flow
@@ -88,38 +29,9 @@ export const LoginScreen = () => {
     navigation.navigate('SignUp');
   };
 
-  const getImageUri = (index: number) => {
-    if (imageItems.length === 0) return '';
-    return imageItems[index % imageItems.length]?.url || '';
-  };
-
-  const renderBackground = () => {
-    if (imageItems.length === 0) {
-      return <View style={[styles.backgroundFill, { backgroundColor: '#1A1A1A' }]} />;
-    }
-
-    const firstImageIndex = showFirst ? currentIndex : (currentIndex + imageItems.length - 1) % imageItems.length;
-    const secondImageIndex = showFirst ? (currentIndex + imageItems.length - 1) % imageItems.length : currentIndex;
-
-    return (
-      <View style={StyleSheet.absoluteFillObject}>
-        <Animated.Image
-          source={{ uri: getImageUri(firstImageIndex) }}
-          style={[styles.backgroundImage, { opacity: fadeAnim1 }]}
-          resizeMode="cover"
-        />
-        <Animated.Image
-          source={{ uri: getImageUri(secondImageIndex) }}
-          style={[styles.backgroundImage, { opacity: fadeAnim2 }]}
-          resizeMode="cover"
-        />
-      </View>
-    );
-  };
-
   return (
     <View style={styles.root}>
-      {renderBackground()}
+      <AnimatedBackground />
       <View style={styles.overlay} />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
@@ -161,16 +73,6 @@ export const LoginScreen = () => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  backgroundFill: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width,
-    height,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
