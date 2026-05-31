@@ -13,6 +13,9 @@ import {
   Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../../navigation/AppStack';
 import { darkColors } from '../../theme/colors';
 import { postService, Post } from '../../services/post.service';
 
@@ -77,6 +80,7 @@ const ExploreSkeleton: React.FC = () => {
 };
 
 export const ExploreScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -147,7 +151,11 @@ export const ExploreScreen = () => {
     const height = index % 2 === 0 ? 220 : 160;
 
     return (
-      <TouchableOpacity style={[styles.gridItem, { height }]} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={[styles.gridItem, { height }]}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('PostDetail', { postId: item._id })}
+      >
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.gridImage} />
         ) : (
