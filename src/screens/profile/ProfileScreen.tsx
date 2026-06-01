@@ -10,12 +10,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../../navigation/AppStack';
 import { lightColors } from '../../theme/colors';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { fetchProfile, fetchMyPosts } from '../../store/slices/userSlice';
 
 export const ProfileScreen = () => {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const authUser = useAppSelector((state) => state.auth.user);
   const { profile, myPosts, isLoading } = useAppSelector((state) => state.user);
   const [activeTab, setActiveTab] = useState<'posts' | 'saved'>('posts');
@@ -44,7 +48,11 @@ export const ProfileScreen = () => {
   const renderPostThumbnail = ({ item }: { item: any }) => {
     const imageUrl = item.media?.[0]?.url;
     return (
-      <View style={styles.thumbnailContainer}>
+      <TouchableOpacity
+        style={styles.thumbnailContainer}
+        onPress={() => navigation.navigate('PostDetail', { postId: item._id })}
+        activeOpacity={0.8}
+      >
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.gridImage} />
         ) : (
@@ -52,7 +60,7 @@ export const ProfileScreen = () => {
             <Feather name="image" size={20} color={lightColors.textSecondary} />
           </View>
         )}
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -93,7 +101,7 @@ export const ProfileScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.settingsBtn}>
+        <TouchableOpacity style={styles.settingsBtn} onPress={() => navigation.navigate('Settings')}>
           <Feather name="settings" size={22} color={lightColors.textPrimary} />
         </TouchableOpacity>
       </View>
@@ -148,7 +156,7 @@ export const ProfileScreen = () => {
               </View>
 
               {/* Edit Profile Button */}
-              <TouchableOpacity style={styles.editBtn}>
+              <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('EditProfile')}>
                 <Text style={styles.editBtnText}>Edit Profile</Text>
               </TouchableOpacity>
             </View>

@@ -8,20 +8,21 @@ import {
   StyleSheet,
   Dimensions,
   ViewToken,
+  SafeAreaView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { useAppDispatch } from '../../store';
 import { setOnboardingComplete } from '../../store/slices/appSlice';
-import { colors } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
 interface Slide {
   id: string;
-  icon: keyof typeof Feather.glyphMap;
+  icon: string;
   title: string;
   subtitle: string;
+  backgroundColor: string;
 }
 
 const slides: Slide[] = [
@@ -29,26 +30,32 @@ const slides: Slide[] = [
     id: '1',
     icon: 'aperture',
     title: 'Discover Nepali Art',
-    subtitle: 'Explore traditional and contemporary artworks from Nepal\'s finest artists',
+    subtitle:
+      'Explore a curated collection of traditional and contemporary artworks from Nepal\'s most talented artists.',
+    backgroundColor: '#1B1464',
   },
   {
     id: '2',
-    icon: 'heart',
-    title: 'Support Artists',
-    subtitle: 'Like, save, and connect with the creative community',
+    icon: 'users',
+    title: 'Connect with Artists',
+    subtitle:
+      'Follow your favorite creators, engage with their work, and purchase original pieces directly.',
+    backgroundColor: '#0D3B66',
   },
   {
     id: '3',
-    icon: 'globe',
-    title: 'Join the Community',
-    subtitle: 'Share your own creations and be part of Nepal\'s art revolution',
+    icon: 'edit-3',
+    title: 'Share Your Creations',
+    subtitle:
+      'Post your artwork, build your audience, and become part of Nepal\'s growing creative community.',
+    backgroundColor: '#2D1B4E',
   },
 ];
 
 export const OnboardingScreen = () => {
   const dispatch = useAppDispatch();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<any>(null);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -65,16 +72,28 @@ export const OnboardingScreen = () => {
     await SecureStore.setItemAsync('hasCompletedOnboarding', 'true');
   };
 
+  const handleNext = () => {
+    if (currentIndex < slides.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+    }
+  };
+
   const renderSlide = ({ item, index }: { item: Slide; index: number }) => (
-    <View style={styles.slide}>
+    <View style={[styles.slide, { backgroundColor: item.backgroundColor }]}>
       <View style={styles.iconContainer}>
-        <Feather name={item.icon} size={64} color={colors.accent} />
+        <View style={styles.iconCircle}>
+          <Feather name={item.icon} size={56} color="#FFFFFF" />
+        </View>
       </View>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.subtitle}>{item.subtitle}</Text>
-      {index === slides.length - 1 && (
-        <TouchableOpacity style={styles.getStartedButton} onPress={handleGetStarted}>
-          <Text style={styles.getStartedText}>Get Started</Text>
+      {index === slides.length - 1 ? (
+        <TouchableOpacity style={styles.actionButton} onPress={handleGetStarted}>
+          <Text style={styles.actionButtonText}>Get Started</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.actionButton} onPress={handleNext}>
+          <Text style={styles.actionButtonText}>Next</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -82,6 +101,13 @@ export const OnboardingScreen = () => {
 
   return (
     <View style={styles.container}>
+      {/* Skip button */}
+      <SafeAreaView style={styles.skipWrapper}>
+        <TouchableOpacity style={styles.skipButton} onPress={handleGetStarted}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -93,6 +119,8 @@ export const OnboardingScreen = () => {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
       />
+
+      {/* Dots */}
       <View style={styles.dotsContainer}>
         {slides.map((_, index) => (
           <View
@@ -111,7 +139,23 @@ export const OnboardingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1B1464',
+  },
+  skipWrapper: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  skipButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  skipText: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
   },
   slide: {
     width,
@@ -121,29 +165,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   iconContainer: {
-    marginBottom: 32,
+    marginBottom: 40,
+  },
+  iconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 48,
   },
-  getStartedButton: {
-    backgroundColor: colors.accent,
+  actionButton: {
+    backgroundColor: '#FF3B30',
     paddingVertical: 16,
     paddingHorizontal: 48,
-    borderRadius: 8,
+    borderRadius: 30,
   },
-  getStartedText: {
+  actionButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
@@ -155,15 +207,15 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginHorizontal: 6,
   },
   dotActive: {
-    backgroundColor: colors.accent,
+    backgroundColor: '#FFFFFF',
   },
   dotInactive: {
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
 });

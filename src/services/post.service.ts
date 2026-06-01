@@ -69,4 +69,22 @@ export const postService = {
   unsavePost: async (postId: string): Promise<void> => {
     await api.delete(`/posts/${postId}/saves`);
   },
+
+  getPostById: async (postId: string): Promise<Post> => {
+    const response = await api.get(`/posts/${postId}`);
+    return response.data.data;
+  },
+
+  reportPost: async (
+    postId: string,
+    reason: string,
+    details?: string
+  ): Promise<void> => {
+    await api.post('/reports', {
+      targetType: 'Post',
+      targetId: postId,
+      reason,
+      details,
+    });
+  },
 };
