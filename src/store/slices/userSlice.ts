@@ -39,6 +39,9 @@ const userSlice = createSlice({
       state.savedPosts = [];
       state.isLoading = false;
     },
+    setProfile(state, action) {
+      state.profile = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -65,5 +68,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { clearUserState } = userSlice.actions;
+export const { clearUserState, setProfile } = userSlice.actions;
 export default userSlice.reducer;

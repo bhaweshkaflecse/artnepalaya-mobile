@@ -14,8 +14,9 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { lightColors } from '../../theme/colors';
-import { useAppSelector } from '../../store';
+import { useAppSelector, useAppDispatch } from '../../store';
 import { userService } from '../../services/user.service';
+import { setProfile } from '../../store/slices/userSlice';
 
 const ROLE_OPTIONS = [
   { label: 'Artist', emoji: '🎨', value: 'Artist' },
@@ -26,6 +27,7 @@ const ROLE_OPTIONS = [
 
 export const EditProfileScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const authUser = useAppSelector((state) => state.auth.user);
   const profile = useAppSelector((state) => state.user.profile);
 
@@ -49,12 +51,13 @@ export const EditProfileScreen = () => {
 
     setIsSaving(true);
     try {
-      await userService.updateProfile({
+      const updatedUser = await userService.updateProfile({
         fullName: fullName.trim(),
         username: username.trim(),
         bio: bio.trim(),
         role: selectedRole,
       } as any);
+      dispatch(setProfile(updatedUser));
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
