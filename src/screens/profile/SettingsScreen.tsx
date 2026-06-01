@@ -12,9 +12,11 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as SecureStore from 'expo-secure-store';
 import { lightColors } from '../../theme/colors';
 import { userService } from '../../services/user.service';
-import { useAppSelector } from '../../store';
+import { useAppSelector, useAppDispatch } from '../../store';
+import { logout } from '../../store/slices/authSlice';
 
 type SettingsNavProp = NativeStackNavigationProp<{
   CmsPage: { slug: string; title: string };
@@ -30,9 +32,29 @@ const CMS_PAGES = [
 export const SettingsScreen = () => {
   const navigation = useNavigation<SettingsNavProp>();
   const profile = useAppSelector((state) => state.user.profile);
+  const dispatch = useAppDispatch();
   const [nsfwBlurEnabled, setNsfwBlurEnabled] = useState(
     (profile as any)?.nsfwBlurEnabled ?? true
   );
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await SecureStore.deleteItemAsync('accessToken');
+            await SecureStore.deleteItemAsync('refreshToken');
+            dispatch(logout());
+          },
+        },
+      ]
+    );
+  };
 
   const handleNsfwToggle = async (value: boolean) => {
     const previousValue = nsfwBlurEnabled;
@@ -86,6 +108,14 @@ export const SettingsScreen = () => {
             <Feather name="chevron-right" size={18} color={lightColors.textSecondary} />
           </TouchableOpacity>
         ))}
+
+        {/* Logout Section */}
+        <View style={styles.logoutSection}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Feather name="log-out" size={18} color="#FFFFFF" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -161,5 +191,23 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 15,
     color: lightColors.textPrimary,
+  },
+  logoutSection: {
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC2626',
+    paddingVertical: 16,
+    borderRadius: 10,
+    gap: 8,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

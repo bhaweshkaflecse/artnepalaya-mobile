@@ -17,6 +17,13 @@ import { lightColors } from '../../theme/colors';
 import { useAppSelector } from '../../store';
 import { userService } from '../../services/user.service';
 
+const ROLE_OPTIONS = [
+  { label: 'Artist', emoji: '🎨', value: 'Artist' },
+  { label: 'Gallery', emoji: '🏛️', value: 'Gallery' },
+  { label: 'Business', emoji: '💼', value: 'Business' },
+  { label: 'Art Lover', emoji: '❤️', value: 'Art Lover' },
+];
+
 export const EditProfileScreen = () => {
   const navigation = useNavigation();
   const authUser = useAppSelector((state) => state.auth.user);
@@ -27,6 +34,7 @@ export const EditProfileScreen = () => {
   const [fullName, setFullName] = useState(displayUser?.fullName || '');
   const [username, setUsername] = useState(displayUser?.username || '');
   const [bio, setBio] = useState((profile as any)?.bio || '');
+  const [selectedRole, setSelectedRole] = useState(displayUser?.role || 'Art Lover');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -45,6 +53,7 @@ export const EditProfileScreen = () => {
         fullName: fullName.trim(),
         username: username.trim(),
         bio: bio.trim(),
+        role: selectedRole,
       } as any);
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -124,6 +133,33 @@ export const EditProfileScreen = () => {
             textAlignVertical="top"
           />
           <Text style={styles.charCount}>{bio.length}/300</Text>
+        </View>
+
+        {/* Artwork Role Selector */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Artwork Role</Text>
+          <View style={styles.rolesContainer}>
+            {ROLE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.roleChip,
+                  selectedRole === option.value && styles.roleChipSelected,
+                ]}
+                onPress={() => setSelectedRole(option.value)}
+              >
+                <Text style={styles.roleEmoji}>{option.emoji}</Text>
+                <Text
+                  style={[
+                    styles.roleLabel,
+                    selectedRole === option.value && styles.roleLabelSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -206,5 +242,37 @@ const styles = StyleSheet.create({
     color: lightColors.textSecondary,
     marginTop: 4,
     textAlign: 'right',
+  },
+  rolesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  roleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: lightColors.border,
+    backgroundColor: lightColors.surface,
+  },
+  roleChipSelected: {
+    borderColor: lightColors.accent,
+    backgroundColor: lightColors.accent + '15',
+  },
+  roleEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  roleLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: lightColors.textSecondary,
+  },
+  roleLabelSelected: {
+    color: lightColors.accent,
+    fontWeight: '600',
   },
 });
