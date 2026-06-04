@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as SecureStore from 'expo-secure-store';
 import { useAppDispatch } from '../../store';
 import { setGuest } from '../../store/slices/authSlice';
 import { AnimatedBackground } from '../../components/common/AnimatedBackground';
@@ -21,7 +22,9 @@ export const LoginScreen = () => {
     // TODO: Implement Google OAuth flow
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
     dispatch(setGuest());
   };
 

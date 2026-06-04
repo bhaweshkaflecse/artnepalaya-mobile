@@ -30,12 +30,12 @@ const SkeletonGridItem: React.FC<{ index: number }> = ({ index }) => {
         Animated.timing(animatedValue, {
           toValue: 1,
           duration: 1000,
-          useNativeAnimation: true,
+          useNativeDriver: true,
         }),
         Animated.timing(animatedValue, {
           toValue: 0,
           duration: 1000,
-          useNativeAnimation: true,
+          useNativeDriver: true,
         }),
       ])
     );

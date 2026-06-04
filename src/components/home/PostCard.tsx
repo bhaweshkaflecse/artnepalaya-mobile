@@ -37,17 +37,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     Animated.sequence([
       Animated.spring(heartScale, {
         toValue: 1.2,
-        useNativeAnimation: true,
+        useNativeDriver: true,
       }),
       Animated.spring(heartScale, {
         toValue: 1,
-        useNativeAnimation: true,
+        useNativeDriver: true,
       }),
       Animated.delay(400),
       Animated.timing(heartOpacity, {
         toValue: 0,
         duration: 300,
-        useNativeAnimation: true,
+        useNativeDriver: true,
       }),
     ]).start();
   };

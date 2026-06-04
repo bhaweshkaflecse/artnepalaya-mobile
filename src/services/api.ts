@@ -63,7 +63,8 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const hadAuthHeader = originalRequest.headers?.Authorization || originalRequest.headers?.authorization;
+    if (error.response?.status === 401 && !originalRequest._retry && hadAuthHeader) {
       if (isRefreshing) {
         return new Promise<InternalAxiosRequestConfig>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
