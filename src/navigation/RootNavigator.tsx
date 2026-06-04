@@ -4,8 +4,9 @@ import { View, ActivityIndicator } from 'react-native';
 import { useAppSelector } from '../store';
 import { selectIsAuthenticated, selectIsGuest } from '../store/slices/authSlice';
 import { AuthStack } from './AuthStack';
-import { MainTabs } from './MainTabs';
+import { AppStack } from './AppStack';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
+import { GlobalPopupModal } from '../components/common/GlobalPopupModal';
 
 export const RootNavigator = () => {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -25,7 +26,12 @@ export const RootNavigator = () => {
   }
 
   if (isAuthenticated || isGuest) {
-    return <MainTabs />;
+    return (
+      <>
+        <AppStack />
+        <GlobalPopupModal />
+      </>
+    );
   }
 
   return <AuthStack />;
