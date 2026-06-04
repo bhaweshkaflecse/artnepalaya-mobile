@@ -17,14 +17,22 @@ const initialState: AppState = {
   isLoadingConfig: false,
 };
 
-export const loadAppState = createAsyncThunk('app/loadAppState', async () => {
-  const value = await SecureStore.getItemAsync('hasCompletedOnboarding');
-  return value === 'true';
+export const loadAppState = createAsyncThunk('app/loadAppState', async (_, { rejectWithValue }) => {
+  try {
+    const value = await SecureStore.getItemAsync('hasCompletedOnboarding');
+    return value === 'true';
+  } catch (error: any) {
+    return rejectWithValue('Failed to load app state');
+  }
 });
 
-export const fetchAuthConfig = createAsyncThunk('app/fetchAuthConfig', async () => {
-  const media = await configService.fetchAuthBackgroundMedia();
-  return media;
+export const fetchAuthConfig = createAsyncThunk('app/fetchAuthConfig', async (_, { rejectWithValue }) => {
+  try {
+    const media = await configService.fetchAuthBackgroundMedia();
+    return media;
+  } catch (error: any) {
+    return rejectWithValue(error?.response?.data?.message || 'Failed to load auth config');
+  }
 });
 
 const appSlice = createSlice({
