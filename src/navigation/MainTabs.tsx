@@ -6,12 +6,14 @@ import { HomeScreen } from '../screens/home/HomeScreen';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { CreateScreen } from '../screens/create/CreateScreen';
 import { MarketplacePlaceholder } from '../screens/marketplace/MarketplacePlaceholder';
+import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 export type MainTabsParamList = {
   Home: undefined;
   Explore: undefined;
   Create: undefined;
+  Community: undefined;
   Marketplace: undefined;
   Profile: undefined;
 };
@@ -55,6 +57,15 @@ export const MainTabs = () => {
         options={{
           tabBarIcon: ({ color, size }) => (
             <Feather name="plus-circle" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Community"
+        component={CommunityScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="users" size={size} color={color} />
           ),
         }}
       />

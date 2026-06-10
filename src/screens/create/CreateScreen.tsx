@@ -32,6 +32,7 @@ export const CreateScreen = () => {
   const [tags, setTags] = useState('');
   const [artworkType, setArtworkType] = useState<string>('');
   const [isHumanMade, setIsHumanMade] = useState(false);
+  const [isNsfw, setIsNsfw] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
   const pickImage = async () => {
@@ -65,6 +66,7 @@ export const CreateScreen = () => {
     setTags('');
     setArtworkType('');
     setIsHumanMade(false);
+    setIsNsfw(false);
   };
 
   const handlePublish = async () => {
@@ -123,6 +125,10 @@ export const CreateScreen = () => {
       }
 
       formData.append('isHumanMade', 'true');
+
+      if (isNsfw) {
+        formData.append('isNsfw', 'true');
+      }
 
       await api.post('/posts', formData, {
         headers: {
@@ -240,6 +246,24 @@ export const CreateScreen = () => {
             I declare that this artwork is 100% human-created. I understand that
             AI-generated content is strictly prohibited on Artnepalaya and violates
             the Terms of Service.
+          </Text>
+        </View>
+
+        {/* NSFW Toggle */}
+        <View style={styles.nsfwContainer}>
+          <TouchableOpacity
+            onPress={() => setIsNsfw(!isNsfw)}
+            style={styles.checkbox}
+          >
+            <Ionicons
+              name={isNsfw ? 'checkbox' : 'square-outline'}
+              size={26}
+              color={isNsfw ? lightColors.accent : lightColors.textSecondary}
+            />
+          </TouchableOpacity>
+          <Text style={styles.nsfwText}>
+            18+ / Sensitive Content - This artwork contains mature or sensitive
+            content that may not be suitable for all audiences.
           </Text>
         </View>
       </ScrollView>
@@ -363,6 +387,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   declarationText: {
+    flex: 1,
+    fontSize: 13,
+    color: lightColors.textPrimary,
+    lineHeight: 20,
+  },
+  nsfwContainer: {
+    flexDirection: 'row',
+    backgroundColor: lightColors.surface,
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: lightColors.border,
+  },
+  nsfwText: {
     flex: 1,
     fontSize: 13,
     color: lightColors.textPrimary,

@@ -12,6 +12,7 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { darkColors } from '../../theme/colors';
 import { Post, postService } from '../../services/post.service';
+import { ReportModal } from '../common/ReportModal';
 
 interface PostCardProps {
   post: Post;
@@ -20,6 +21,7 @@ interface PostCardProps {
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [isLiked, setIsLiked] = useState(post.isLikedByMe || false);
   const [isSaved, setIsSaved] = useState(post.isSavedByMe || false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // Double-tap detection
   const lastTap = useRef<number>(0);
@@ -35,17 +37,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     Animated.sequence([
       Animated.spring(heartScale, {
         toValue: 1.2,
-        useNativeAnimation: true,
+        useNativeDriver: true,
       }),
       Animated.spring(heartScale, {
         toValue: 1,
-        useNativeAnimation: true,
+        useNativeDriver: true,
       }),
       Animated.delay(400),
       Animated.timing(heartOpacity, {
         toValue: 0,
         duration: 300,
-        useNativeAnimation: true,
+        useNativeDriver: true,
       }),
     ]).start();
   };
@@ -114,12 +116,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <Feather name="user" size={16} color={darkColors.textSecondary} />
           )}
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.username}>{post.authorId.username}</Text>
           <Text style={styles.timestamp}>
             {new Date(post.createdAt).toLocaleDateString()}
           </Text>
         </View>
+        <TouchableOpacity onPress={() => setShowReportModal(true)} style={styles.moreBtn}>
+          <Feather name="more-horizontal" size={20} color={darkColors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {/* Image with double-tap */}
@@ -179,14 +184,21 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         )}
         {post.tags.length > 0 && (
           <View style={styles.tagContainer}>
-            {post.tags.map((tag) => (
-              <Text key={tag._id} style={styles.tag}>
-                #{tag.name}
+            {post.tags.map((tag: any, index: number) => (
+              <Text key={typeof tag === 'string' ? tag : (tag._id || index.toString())} style={styles.tag}>
+                #{typeof tag === 'string' ? tag : tag.name}
               </Text>
             ))}
           </View>
         )}
       </View>
+
+      {/* Report Modal */}
+      <ReportModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        postId={post._id}
+      />
     </View>
   );
 };
@@ -277,5 +289,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: darkColors.textSecondary,
     marginRight: 8,
+  },
+  moreBtn: {
+    padding: 4,
   },
 });
