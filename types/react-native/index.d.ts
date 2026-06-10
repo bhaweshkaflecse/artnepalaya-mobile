@@ -41,7 +41,7 @@ declare module 'react-native' {
   export const RefreshControl: React.FC<any>;
   export const Modal: React.FC<any>;
   export const StatusBar: React.FC<any>;
-  export const Alert: { alert: (title: string, message?: string) => void };
+  export const Alert: { alert: (title: string, message?: string, buttons?: any[], options?: any) => void };
   export const KeyboardAvoidingView: React.FC<any>;
   export const Linking: { openURL: (url: string) => Promise<void> };
   export const Platform: { OS: string; select: (obj: any) => any };
